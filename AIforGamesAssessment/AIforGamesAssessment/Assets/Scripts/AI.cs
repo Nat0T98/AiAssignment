@@ -109,7 +109,17 @@ public class AI : MonoBehaviour
     // Update is called once per frame
     void Update ()
     {
+        redTeamMoveRandom();
         // Run your AI code in here
+
+    }
+
+    void redTeamMoveRandom()
+    {
+        if (_agentData.AgentName == Names.RedTeamMember1)
+        {
+            _agentActions.MoveToRandomLocation();
+        }
 
     }
 }
