@@ -1,0 +1,255 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine; 
+
+public enum NodeState
+{
+    SUCCESS,
+    FAILURE,
+    RUNNING
+}
+
+[System.Serializable]
+public abstract class Node 
+{
+    protected NodeState nodeState;
+    private NodeState NodeState { get { return nodeState; } }
+
+    public abstract NodeState Evaluate(); 
+}
+
+
+
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+///================================================================================
+/// <summary>
+/// Evaluates the child node and returns the opposite (NOT)
+/// </summary>
+///================================================================================
+
+public class Inverter : Node
+{
+    protected Node node;
+
+    public Inverter(Node _node)
+    {
+        node = _node;
+    }
+
+
+    public override NodeState Evaluate()
+    {  
+        //Single child, no need of for loop
+        switch (node.Evaluate())
+        {
+            case NodeState.SUCCESS:
+                nodeState = NodeState.FAILURE;
+                break;
+            case NodeState.FAILURE:
+                nodeState = NodeState.SUCCESS;
+                return nodeState;
+            case NodeState.RUNNING: //Don't invert if running
+                nodeState = NodeState.RUNNING;
+                break;
+            default:
+                break;
+        } 
+
+        return nodeState;
+    }
+}
+
+
+
+
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+///================================================================================
+/// <summary>
+/// Evaluates the children nodes in sequence from left to right and succeeds if at 
+/// least on child succedes (OR)
+/// </summary>
+///================================================================================
+
+public class Selector : Node
+{
+    protected List<Node> nodes = new List<Node>();
+
+    public Selector(List<Node> _nodes)
+    {
+        nodes = _nodes;
+    }
+
+
+    public override NodeState Evaluate()
+    { 
+        foreach (var node in nodes)
+        {
+            switch (node.Evaluate())
+            {
+                case NodeState.SUCCESS:
+                    nodeState = NodeState.SUCCESS;
+                    return nodeState;
+                case NodeState.FAILURE: //Don't do anything, Keep looking
+                    break;
+                case NodeState.RUNNING:
+                    nodeState = NodeState.RUNNING;
+                    return nodeState;
+                default:
+                    break;
+            }
+        }
+
+        //All child nodes were a failure
+        nodeState = NodeState.FAILURE; 
+        return nodeState;
+    }
+}
+
+
+
+
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+///================================================================================
+/// <summary>
+/// Evaluates the children nodes in sequence from left to right and succeeds only
+/// when all the children succeed (AND)
+/// </summary>
+///================================================================================
+
+public class Sequence : Node
+{
+    protected List<Node> nodes = new List<Node>();
+
+    public Sequence(List<Node> _nodes)
+    {
+        nodes = _nodes;
+    }
+
+
+    public override NodeState Evaluate()
+    { 
+        foreach (var node in nodes)
+        {
+            switch (node.Evaluate())
+            { 
+                case NodeState.FAILURE:
+                    nodeState = NodeState.FAILURE;
+                    return nodeState; 
+                case NodeState.RUNNING:
+                    nodeState = NodeState.RUNNING;
+                    return nodeState;  
+            }
+        }
+
+        //No child is a failure, check if anychild was running
+        nodeState = NodeState.SUCCESS; 
+        return nodeState;
+    } 
+}
+
+
+
+
+    private Node topNode;
+
+    // Use this for initialization
+    void Start ()
+    {
+        // Initialise the accessable script components
+        _agentData = GetComponent<AgentData>();
+        _agentActions = GetComponent<AgentActions>();
+        _agentSenses = GetComponentInChildren<Sensing>();
+        _agentInventory = GetComponentInChildren<InventoryController>();
+
+        ConstructBehaviourTree();
+    }
+
+    // Update is called once per frame
+    void Update ()
+    {
+        // Run your AI code in here
+        topNode.Evaluate(); 
+    }
+
+    private void ConstructBehaviourTree()
+    {
+        //Actions
+        GoToFlagAction goToEnemyFlag = new GoToFlagAction(_agentData, _agentActions, _agentSenses, GameObject.Find(_agentData.EnemyFlagName));
+        GoToFlagAction goToFriendlyFlag = new GoToFlagAction(_agentData, _agentActions, _agentSenses, GameObject.Find(_agentData.FriendlyFlagName));
+        GoToDefendFriendlyBaseAction goToFriendlyBase = new GoToDefendFriendlyBaseAction(_agentData, _agentActions);
+        GoToFriendWithFlagAction goToFriendlyWithFlag = new GoToFriendWithFlagAction(_agentData, _agentActions, _agentSenses);
+        GoToFriendlyBaseBringFlagAction goToFriendlyBaseToBringFlag = new GoToFriendlyBaseBringFlagAction(_agentData, _agentActions);
+        GoToClosestCollectableAction goToItem = new GoToClosestCollectableAction(_agentData, _agentActions);
+        GoToClosestEnemyInViewAction goToClosestEnemy = new GoToClosestEnemyInViewAction(_agentData, _agentActions, _agentSenses);
+        TakeFlagAction takeFlag = new TakeFlagAction(_agentActions); //Go to either friendly or enemy flag
+        DropFlagAction dropFlag = new DropFlagAction(_agentData, _agentActions);
+        TakePickUpAction takePickUp = new TakePickUpAction(_agentData, _agentActions, _agentInventory);
+        UsePickUpAction usePickUpItem = new UsePickUpAction(_agentData, _agentActions);
+        AttackAction attack = new AttackAction(_agentData, _agentActions);  //Attacks closest enemy
+        FleeAction flee = new FleeAction(_agentData, _agentActions, _agentSenses); //Flee from closest enemy, stops if can pick up an item
+        DefendFriendlyBaseAction defendBase = new DefendFriendlyBaseAction(_agentData, _agentActions, _agentSenses);
+        DefendFriendlyWithFlagAction defendFriendWithFlag = new DefendFriendlyWithFlagAction(_agentData, _agentActions, _agentSenses);
+
+        //Conditions 
+        IsFlagInBaseCondition isEnemyFlagInEnemyBase = new IsFlagInBaseCondition(_agentData.EnemyFlagName, _agentData.EnemyBase.name);
+        IsFlagOutsideAnyBaseCondition isEnemyFlagOutsideAnyBase = new IsFlagOutsideAnyBaseCondition(_agentData.EnemyFlagName);
+        IsFlagInBaseCondition isFriendlyFlagInEnemyBase = new IsFlagInBaseCondition(_agentData.FriendlyFlagName, _agentData.EnemyBase.name);
+        IsFlagOutsideAnyBaseCondition isFriendlyFlagOutsideAnyBase = new IsFlagOutsideAnyBaseCondition(_agentData.FriendlyFlagName);
+        AreEnemiesInViewCondition isEnemyInView = new AreEnemiesInViewCondition(_agentSenses);
+        HasEnoughHealthCondition hasEnoughHealth = new HasEnoughHealthCondition(_agentData);
+        HasPickUpItemBeenUsedCondition hasItemBeenUsed = new HasPickUpItemBeenUsedCondition(_agentData);
+        HasAnyPickUpItemCondition hasAnyPickUpItem = new HasAnyPickUpItemCondition(_agentData, _agentInventory);
+        CanTakeItemCondition canTakeItemTargetted = new CanTakeItemCondition(_agentData, _agentInventory);
+        IsHoldingAnyFlagCondition hasAnyFlag = new IsHoldingAnyFlagCondition(_agentData);
+        AreBothFlagsInFriendlyBaseCondition areBothFlagInFriendlyBase = new AreBothFlagsInFriendlyBaseCondition(_agentData);
+        IsFriendHoldingAFlagCondition isFriendHoldingAnyFlag = new IsFriendHoldingAFlagCondition(_agentData);
+        IsEngagingAFightCondition isEngagingAFight = new IsEngagingAFightCondition(_agentData);
+
+
+        //SEQUENCES, SELECTORS AND INVERTERS
+        //Defend flag selector
+        Sequence defendPlayerSeq = new Sequence(new List<Node>() { isFriendHoldingAnyFlag, goToFriendlyWithFlag, defendFriendWithFlag });
+        Sequence defendBaseSeq = new Sequence(new List<Node>() { areBothFlagInFriendlyBase, goToFriendlyBase, defendBase });
+        Selector defendFlagSelect = new Selector(new List<Node>() { defendBaseSeq, defendPlayerSeq });
+
+        //Bring flag to base sequence
+        Sequence tryBringFlagBackToBaseSeq = new Sequence(new List<Node>() { goToFriendlyBaseToBringFlag, dropFlag });
+        Sequence bringFlagToBaseSeq = new Sequence(new List<Node>() { hasAnyFlag, tryBringFlagBackToBaseSeq });
+
+        //Offence/Defence selector
+        Sequence goToItemSeq = new Sequence(new List<Node>() { goToItem, takePickUp });
+        Sequence canTakeItemSeq = new Sequence(new List<Node>() { canTakeItemTargetted, goToItemSeq });
+        Selector fleeSelect = new Selector(new List<Node>() { flee, canTakeItemSeq });
+        Sequence usePickUpSeq = new Sequence(new List<Node>() { hasAnyPickUpItem, usePickUpItem });
+        Selector canUseItemSelect = new Selector(new List<Node>() { hasEnoughHealth, hasItemBeenUsed });
+        Selector canWinSelect = new Selector(new List<Node>() { canUseItemSelect, usePickUpSeq });
+        Sequence tryToAttackSeq = new Sequence(new List<Node>() { canWinSelect, goToClosestEnemy, attack });
+        Sequence attackSeq = new Sequence(new List<Node>() { isEnemyInView, tryToAttackSeq });
+        Selector offenceDefenceSelect = new Selector(new List<Node>() { attackSeq, fleeSelect });
+
+        //Capture flag
+        Sequence goToFriendlyFlagSeq = new Sequence(new List<Node>() { goToFriendlyFlag, takeFlag });
+        Selector canGetFriendlyFlagSelect = new Selector(new List<Node>() { isFriendlyFlagInEnemyBase, isFriendlyFlagOutsideAnyBase });
+        Sequence getFriendlyFlagSeq = new Sequence(new List<Node>() { canGetFriendlyFlagSelect, goToFriendlyFlagSeq });
+        Sequence goToEnemyFlagSeq = new Sequence(new List<Node>() { goToEnemyFlag, takeFlag });
+        Selector canGetEnemyFlagSelect = new Selector(new List<Node>() { isEnemyFlagInEnemyBase, isEnemyFlagOutsideAnyBase });
+        Sequence getEnemyFlagSeq = new Sequence(new List<Node>() { canGetEnemyFlagSelect, goToEnemyFlagSeq });
+        Selector tryToGetAFlagSelect = new Selector(new List<Node>() { getEnemyFlagSeq, getFriendlyFlagSeq }); 
+        Inverter isEngagingAFightInv = new Inverter(isEngagingAFight);
+        Inverter hasAnyFlagInv = new Inverter(hasAnyFlag);
+        Sequence captureFlagSeq = new Sequence(new List<Node>() { hasAnyFlagInv, isEngagingAFightInv, tryToGetAFlagSelect });
+
+        //Main node
+        topNode = new Selector(new List<Node>() { captureFlagSeq, bringFlagToBaseSeq, offenceDefenceSelect, defendFlagSelect });
+    }
+}
+
