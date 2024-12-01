@@ -95,6 +95,8 @@ public class AI : MonoBehaviour
     private AgentActions _agentActions;
 
 
+    private Node rootNode;
+
     // Use this for initialization
     void Start ()
     {
@@ -109,6 +111,7 @@ public class AI : MonoBehaviour
     // Update is called once per frame
     void Update ()
     {
+        //rootNode.Evaluate();
         redTeamMoveRandom();
         // Run your AI code in here
 
@@ -122,4 +125,16 @@ public class AI : MonoBehaviour
         }
 
     }
+
+    void initialiseBehaviourTree()
+    {
+        //Initialise Tasks
+
+        //Initialise State Evaluations
+
+        //Initialise Composites and Decorators
+    }
+
+
+
 }
