@@ -15,7 +15,7 @@ public class AgentActions : MonoBehaviour
     private const string AttackAnimationTrigger = "Attack";
 
     // Constants for ranges of destinations
-    private const float MaxRandomDestinationRange = 100.0f;
+    private const float MaxRandomDestinationRange = 50.0f;
     private const float MaxArrivalRange = 10.0f;
 
     private AgentData _agentData;

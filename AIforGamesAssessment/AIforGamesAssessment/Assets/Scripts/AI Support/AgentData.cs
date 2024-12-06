@@ -63,7 +63,7 @@ public class AgentData : MonoBehaviour
     }
 
     /// <summary>
-    /// The GameObject representing the friendly base
+    /// The GameObject representing the enemy base
     /// </summary>
     private GameObject _enemyBase;
     public GameObject EnemyBase

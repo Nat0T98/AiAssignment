@@ -10,8 +10,8 @@ public static class Names
     public const string BlueFlag = "Blue Flag";
     public const string RedFlag = "Red Flag";
 
-    public const string RedBase = "Red Base";
     public const string BlueBase = "Blue Base";
+    public const string RedBase = "Red Base";
 
     public const string BlueTeamMember1 = "Blue Team Member 1";
     public const string BlueTeamMember2 = "Blue Team Member 2";
@@ -32,4 +32,5 @@ public static class Tags
     public const string RedTeam = "Red Team";
     public const string Collectable = "Collectable";
     public const string Flag = "Flag";
+    public const string Base = "Base";
 }

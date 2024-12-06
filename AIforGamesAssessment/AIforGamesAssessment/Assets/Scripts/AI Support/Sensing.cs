@@ -15,7 +15,7 @@ public class Sensing : MonoBehaviour
     // The owner of the senses
     private AgentData _agentData;
 
-    private const int MaxObjectsInView = 10;
+    private const int MaxObjectsInView = 12;
 
     // Masks to limit visibility
     public LayerMask VisibleToAiMask;
@@ -31,6 +31,10 @@ public class Sensing : MonoBehaviour
     // Use this for initialization
     void Start()
     {
+        // initialise layer mask variables to filer the senses
+        VisibleToAiMask = LayerMask.GetMask("VisibleToAi");
+        WallsLayer = LayerMask.GetMask("Walls");
+
         _agentData = GetComponentInParent<AgentData>();
     }
 

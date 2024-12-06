@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 23823423578254316}
   - component: {fileID: 114701009761991016}
   - component: {fileID: 114149705732138542}
-  m_Layer: 8
+  m_Layer: 6
   m_Name: Health Kit
   m_TagString: Collectable
   m_Icon: {fileID: 0}

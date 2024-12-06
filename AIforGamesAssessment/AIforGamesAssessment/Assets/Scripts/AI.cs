@@ -11,6 +11,7 @@ using UnityEngine;
  * public const string RedTeam = "Red Team";	The tag assigned to red team members.
  * public const string Collectable = "Collectable";	The tag assigned to collectable items (health kit and power up).
  * public const string Flag = "Flag";	The tag assigned to the flags, blue or red.
+ * public const string Base = "Base";   The tag assigned to the bases, blue or red
  * 
  * Unity GameObject names
  * public static class Names
@@ -18,8 +19,8 @@ using UnityEngine;
  * public const string HealthKit = "Health Kit";	Health kit name.
  * public const string BlueFlag = "Blue Flag";	The blue teams flag name.
  * public const string RedFlag = "Red Flag";	The red teams flag name.
- * public const string RedBase = "Red Base";    The red teams base name.
  * public const string BlueBase = "Blue Base";  The blue teams base name.
+ * public const string RedBase = "Red Base";    The red teams base name.
  * public const string BlueTeamMember1 = "Blue Team Member 1";	Blue team member 1 name.
  * public const string BlueTeamMember2 = "Blue Team Member 2";	Blue team member 2 name.
  * public const string BlueTeamMember3 = "Blue Team Member 3";	Blue team member 3 name.
@@ -98,7 +99,7 @@ public class AI : MonoBehaviour
     private Node rootNode;
 
     // Use this for initialization
-    void Start ()
+    void Start()
     {
         // Initialise the accessable script components
         _agentData = GetComponent<AgentData>();
@@ -109,7 +110,7 @@ public class AI : MonoBehaviour
     }
 
     // Update is called once per frame
-    void Update ()
+    void Update()
     {
         //rootNode.Evaluate();
         redTeamMoveRandom();
@@ -134,7 +135,6 @@ public class AI : MonoBehaviour
 
         //Initialise Composites and Decorators
     }
-
-
-
 }
+
+
