@@ -10,6 +10,15 @@ public enum AiMood { Idle, Attacking, Fleeing, Winning, Losing, Dead };
 /// </summary>
 public class AgentData : MonoBehaviour
 {
+
+    // STUDENT NOTE, Blackboards
+    private GlobalBlackboard worldBlackboard;
+    public GlobalBlackboard GetWorldBlackboard() { return worldBlackboard; }
+    private TeamBlackboard teamBlackboard;
+    // STUDENT NOTE, Allow the AgentActions to update the blackboard
+    public TeamBlackboard GetTeamBlackboard() { return teamBlackboard; }
+
+
     // Allow us to select the team in the Inspector
     public enum Teams
     {

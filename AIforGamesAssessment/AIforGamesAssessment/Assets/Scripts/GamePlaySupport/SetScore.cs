@@ -15,6 +15,9 @@ public class SetScore : MonoBehaviour
     private bool _enemyFlagInBase;
     private const float ScoreTickDuration = 1.0f;
 
+    //Making a reference to this so can can call in Ai Behaviour
+    public bool IsEnemyFlagInBase() { return _enemyFlagInBase; }
+
     /// <summary>
     /// Collision with base trigger
     /// </summary>
