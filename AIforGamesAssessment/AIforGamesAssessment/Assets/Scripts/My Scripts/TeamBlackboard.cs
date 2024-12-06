@@ -26,14 +26,11 @@ public class TeamBlackboard : MonoBehaviour
     { return enemyFlag; }
 
 
-    // Team members
     private List<AgentData> team = new List<AgentData>();
     public void AddTeamMember(AgentData friendly) { team.Add(friendly); }
     public void RemoveTeamMember(AgentData friendly) 
     {
         GameObject memberGO = friendly.gameObject;
-
-        // No longer the member carrying a flag
         if (GetMemberWithEnemyFlag() == memberGO)
         {
             SetMemberWithEnemyFlag(null);
@@ -42,24 +39,19 @@ public class TeamBlackboard : MonoBehaviour
         {
             SetMemberWithFriendlyFlag(null);
         }
-
-
-        // No longer pursuing flag
         if (GetMembersChasingFlag().Contains(memberGO))
         {
             RemoveMemberChasingFlag(memberGO);
         }
-        // Need to recalculate weakest member
         if (GetWeakestMember() == memberGO)
         {
             SetWeakestMember(null);
         }
-        // Remove from list
         team.Remove(friendly); 
     }
 
     
-    // Weakest member
+    //Weakest member
     private GameObject weakestMember;
     public GameObject GetWeakestMember() 
     { 
@@ -70,7 +62,7 @@ public class TeamBlackboard : MonoBehaviour
         this.weakestMember = weakestMember; 
     }
 
-    // Members holding flags
+    //Members holding flags
     private GameObject memberWithEnemyFlag;
     public GameObject GetMemberWithEnemyFlag() 
     { 
@@ -94,13 +86,12 @@ public class TeamBlackboard : MonoBehaviour
 
 
 
-    // Members pursuing flags
+    //Members chasing flags
     private List<GameObject> membersChasingFlag = new List<GameObject>();
     public List<GameObject> GetMembersChasingFlag() 
     {
         return membersChasingFlag;
     }
-    // Don't add a member who is already in the list
     public void AddMemberChasingFlag(GameObject member) 
     {
         if (!membersChasingFlag.Contains(member)) membersChasingFlag.Add(member);
