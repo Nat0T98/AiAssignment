@@ -8,14 +8,13 @@ public enum Team
     FRIENDLY,
 }
 
-
-public enum GameObjects
+public enum Objects
 {
     ENEMY_FLAG,
     FRIENDLY_FLAG,
 
-    HEALTH_PACK,
-    POWER_PACK,
+    HEALTH_PICKUP,
+    POWER_PICKUP,
 
     NEAREST_ENEMY,
     FRIENDLY_WITH_FLAG,
@@ -40,12 +39,341 @@ public enum PickUps
     POWER,
 }
 
+public class Checks
+{
+    //Check agent health
+    public class AgentHeathLessThan : Node
+    {
+        private AgentData agentData;
+        private TeamBlackboard teamBlackboard;
+        Objects type;
+        int value;
 
+        public AgentHeathLessThan(AgentData agentData, TeamBlackboard teamBlackboard, Objects type, int value)
+        {
+            this.agentData = agentData;
+            this.teamBlackboard = teamBlackboard;
+            this.type = type;
+            this.value = value;
+        }
+        public override NodeState Evaluate()
+        {
+            bool result = false;
+            switch (type)
+            {
+                case Objects.WEAKEST_FRIENDLY:
+
+                    if (teamBlackboard.GetWeakestMember() && teamBlackboard.GetWeakestMember() != agentData.gameObject)
+                    {
+                        result = teamBlackboard.GetWeakestMember().GetComponent<AgentData>().CurrentHitPoints < value;
+                    }
+                    break;
+                case Objects.THIS_AGENT:
+                    result = agentData.CurrentHitPoints < value;
+                    break;
+            }
+            if (result)
+            {
+                return NodeState.SUCCESS;
+            }
+            else
+            {
+
+                return NodeState.FAILURE;
+            }
+        }
+    }
+
+    //Check if there is a Pick Up of type available
+    public class PickUpAvailable : Node
+    {
+        PickUps type;
+
+        public PickUpAvailable(PickUps type)
+        {
+            this.type = type;
+        }
+        public override NodeState Evaluate()
+        {
+            bool result = false;
+            switch (type)
+            {
+                case PickUps.HEALTH:
+
+                    Debug.Log("Is health pack available");
+
+                    HealthKit[] health = GameObject.FindObjectsOfType<HealthKit>();
+                    for (int i = 0; i < health.Length; i++)
+                    {
+                        if (!health[i].transform.parent)
+                        {
+                            result = true;
+                            break;
+                        }
+                    }
+                    break;
+                case PickUps.POWER:
+
+                    Debug.Log("Is power available");
+
+                    PowerUp[] power = GameObject.FindObjectsOfType<PowerUp>();
+                    for (int i = 0; i < power.Length; i++)
+                    {
+                        if (!power[i].transform.parent)
+                        {
+                            result = true;
+                            break;
+                        }
+                    }
+                    break;
+            }
+            if (result)
+            {
+                return NodeState.SUCCESS;
+            }
+            else
+            {
+                return NodeState.FAILURE;
+            }
+        }
+    }
+
+    //Check if team of type has flag
+    public class TeamHasFlag : Node
+    {
+        TeamBlackboard teamBlackboard;
+        Team type;
+
+        public TeamHasFlag(TeamBlackboard teamBlackboard, Team type)
+        {
+            this.teamBlackboard = teamBlackboard;
+            this.type = type;
+        }
+        public override NodeState Evaluate()
+        {
+            bool hasFlag = false;
+
+            switch (type)
+            {
+                case Team.ENEMY:
+                    Debug.Log("Does the " + teamBlackboard.name + " team have the enemy flag?");
+                    if (teamBlackboard.GetMemberWithEnemyFlag()) hasFlag = true;
+                    break;
+                case Team.FRIENDLY:
+                    Debug.Log("Does the " + teamBlackboard.name + " team have the friendly flag?");
+
+                    if (teamBlackboard.GetMemberWithFriendlyFlag()) hasFlag = true;
+                    break;
+            }
+
+            if (hasFlag)
+            {
+                return NodeState.SUCCESS;
+            }
+            else
+            {
+                return NodeState.FAILURE;
+            }
+        }
+    }
+
+    //Check if member has an item
+    public class HasItem : Node
+    {
+        private AgentData agentData;
+        private InventoryController inventoryController;
+        Items type;
+
+        public HasItem(AgentData agentData, InventoryController inventoryController, Items type)
+        {
+            this.agentData = agentData;
+            this.inventoryController = inventoryController;
+            this.type = type;
+        }
+        public override NodeState Evaluate()
+        {
+            bool result = false;
+            switch (type)
+            {
+                case Items.ENEMY_FLAG:
+                    if (inventoryController.HasItem(agentData.EnemyFlagName))
+                    {
+                        result = true;
+                    }
+                    break;
+                case Items.FRIENDLY_FLAG:
+
+                    if (inventoryController.HasItem(agentData.FriendlyFlagName))
+                    {
+                        result = true;
+                    }
+                    break;
+                case Items.HEALTH:
+
+                    if (inventoryController.HasItem("Health Kit"))
+                    {
+                        result = true;
+                    }
+                    break;
+                case Items.POWER:
+                    if (inventoryController.HasItem("Power Up"))
+                    {
+                        result = true;
+                    }
+                    break;
+            }
+            if (result)
+            {
+                return NodeState.SUCCESS;
+            }
+            else
+            {
+                return NodeState.FAILURE;
+            }
+        }
+    }
+
+    //Is PickUp in range
+    public class isPickUpInRange : Node
+    {
+        private AgentData agentData;
+        private Sensing sensing;
+        Items type;
+
+        public isPickUpInRange(AgentData agentData, Sensing sensing, Items type)
+        {
+            this.agentData = agentData;
+            this.sensing = sensing;
+            this.type = type;
+        }
+        public override NodeState Evaluate()
+        {
+            bool result = false;
+            List<GameObject> objectsInView = sensing.GetObjectsInView();
+            for (int i = 0; i < objectsInView.Count; i++)
+            {
+                // If the item is in reach
+                if (sensing.IsItemInReach(objectsInView[i]))
+                {
+
+                    switch (type)
+                    {
+                        case Items.ENEMY_FLAG:
+                            if (objectsInView[i].name.Equals(agentData.EnemyFlagName))
+                            {
+                                result = true;
+                            }
+                            break;
+                        case Items.FRIENDLY_FLAG:
+
+                            if (objectsInView[i].name.Equals(agentData.FriendlyFlagName))
+                            {
+                                result = true;
+                            }
+                            break;
+                        case Items.HEALTH:
+                            if (objectsInView[i].name.Equals("Health Kit"))
+                            {
+                                result = true;
+                            }
+                            break;
+                        case Items.POWER:
+                            if (objectsInView[i].name.Equals("Power Up"))
+                            {
+                                result = true;
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+            if (result)
+            {
+
+                return NodeState.SUCCESS;
+            }
+            else
+            {
+
+                return NodeState.FAILURE;
+            }
+        }
+    }
+
+    //Check if there is an enemy in attack range
+    public class EnemyInAttackRange : Node
+    {
+        private Sensing sensing;
+
+        public EnemyInAttackRange(Sensing sensing)
+        {
+            this.sensing = sensing;
+        }
+        public override NodeState Evaluate()
+        {
+            if (sensing.IsInAttackRange(sensing.GetNearestEnemyInView()))
+            {
+                return NodeState.SUCCESS;
+            }
+            else
+            {
+                return NodeState.FAILURE;
+            }
+        }
+    }
+
+    //Check if a friendly team member is chasing flag
+    public class TeamMemberChasingFlag : Node
+    {
+        private AgentData thisAgent;
+
+        public TeamMemberChasingFlag(AgentData thisAgent)
+        {
+            this.thisAgent = thisAgent;
+        }
+        public override NodeState Evaluate()
+        {
+            List<GameObject> ChasingFlag = thisAgent.GetTeamBlackboard().GetMembersChasingFlag();
+            if ((ChasingFlag.Count == 1 && ChasingFlag[0] != thisAgent.gameObject) || ChasingFlag.Count > 1)
+            {
+                return NodeState.SUCCESS;
+            }
+            else
+            {
+                return NodeState.FAILURE;
+            }
+        }
+    }
+
+    public class FlagAtBase : Node
+    {
+        private TeamBlackboard teamBlackboard;
+
+        public FlagAtBase(TeamBlackboard teamBlackboard)
+        {
+            this.teamBlackboard = teamBlackboard;
+        }
+        public override NodeState Evaluate()
+        {
+            if (teamBlackboard.GetFriendlyBase().IsEnemyFlagInBase())
+            {
+                return NodeState.SUCCESS;
+            }
+            else
+            {
+                return NodeState.FAILURE;
+            }
+        }
+    }
+
+
+}
 
 
 public class Actions
 {
-    // Pick up the nearest Collectable_Type of collectable
+    //Pick up the nearest Item of type
     public class CollectItem : Node
     {
         private AgentActions agentActions;
@@ -114,6 +442,7 @@ public class Actions
                     item = inventoryController.GetItem("Power Up");
                     break;
             }
+
             // Drop the item
             if (item)
             {
@@ -124,15 +453,15 @@ public class Actions
         }
     }
 
-    // Move towards closest GameObject of type
+    //Move towards closest GameObject of type
     public class MoveTowardsGO : Node
     {
         private AgentActions agentActions;
         private AgentData agentData;
         private Sensing sensing;
-        private GameObjects type;
+        private Objects type;
 
-        public MoveTowardsGO(AgentActions agentActions, AgentData agentData, Sensing sensing, GameObjects type)
+        public MoveTowardsGO(AgentActions agentActions, AgentData agentData, Sensing sensing, Objects type)
         {
             this.agentActions = agentActions;
             this.agentData = agentData;
@@ -147,45 +476,44 @@ public class Actions
             bool notInReach = false;
             switch (type)
             {
-                case GameObjects.ENEMY_FLAG:
+                case Objects.ENEMY_FLAG:
                     GO = agentData.GetTeamBlackboard().GetEnemyFlag();
                     isInReach = true;
                     break;
-                case GameObjects.FRIENDLY_FLAG:
+                case Objects.FRIENDLY_FLAG:
                     GO = agentData.GetTeamBlackboard().GetFriendlyFlag();
                     notInReach = true;
                     break;
-                case GameObjects.HEALTH_PACK:
+                case Objects.HEALTH_PICKUP:
                     GO = GetItemTarget("Health Kit");
                     isInReach = true;
                     break;
-                case GameObjects.POWER_PACK:
+                case Objects.POWER_PICKUP:
                     GO = GetItemTarget("Power Up");
                     isInReach = true;
                     break;
-                case GameObjects.NEAREST_ENEMY:
+                case Objects.NEAREST_ENEMY:
                     GO = sensing.GetNearestEnemyInView();
                     notInReach = true;
                     break;
-                case GameObjects.FRIENDLY_WITH_FLAG:
+                case Objects.FRIENDLY_WITH_FLAG:
                     GO = agentData.GetTeamBlackboard().GetMemberWithEnemyFlag();
                     notInReach = true;
                     break;
-                case GameObjects.WEAKEST_FRIENDLY:
+                case Objects.WEAKEST_FRIENDLY:
                     GO = agentData.GetTeamBlackboard().GetWeakestMember();
                     isInReach = true;
                     break;
-                case GameObjects.BASE:
+                case Objects.BASE:
                     GO = agentData.FriendlyBase;
                     notInReach = true;
                     break;
-                case GameObjects.NOT_IN_BASE:
+                case Objects.NOT_IN_BASE:
                     isInReach = true;
                     break;
             }
 
-            // Not in base is for moving the flag to a random location outside of the base (it will succeed due to the check before it)
-            if (type == GameObjects.NOT_IN_BASE)
+            if (type == Objects.NOT_IN_BASE)
             {
                 agentActions.MoveToRandomLocation();
                 return NodeState.RUNNING;
@@ -201,7 +529,6 @@ public class Actions
             return NodeState.RUNNING;
         }
 
-        // Get item with the name 'name' in the agent's view
         private GameObject GetItemTarget(string name)
         {
             List<GameObject> itemsInView = sensing.GetCollectablesInView();
@@ -216,7 +543,7 @@ public class Actions
         }
     }
 
-    // Flee the nearest enemy
+    //Flee
     public class Flee : Node
     {
         private AgentActions agentActions;
@@ -240,7 +567,7 @@ public class Actions
         }
     }
 
-    // Use the first type of that PickUp in inventory
+    //Use first type of PickUp in inventory
     public class UsePickUp : Node
     {
         private AgentActions agentActions;
@@ -273,7 +600,7 @@ public class Actions
         }
     }
 
-    // Attack the nearest enemy
+    //Attack nearest enemy
     public class Attack : Node
     {
         Sensing sensing;
@@ -300,407 +627,4 @@ public class Actions
 
 
 
-public class Conditions
-{
-    // Check agent health
-    public class AgentHeathLessThan : Node
-    {
-        private AgentData agentData;
-        private TeamBlackboard teamBlackboard;
-        GameObjects type;
-        int value;
 
-        public AgentHeathLessThan(AgentData agentData, TeamBlackboard teamBlackboard, GameObjects type, int value)
-        {
-            this.agentData = agentData;
-            this.teamBlackboard = teamBlackboard;
-            this.type = type;
-            this.value = value;
-        }
-        public override NodeState Evaluate()
-        {
-            bool result = false;
-            switch (type)
-            {
-                case GameObjects.WEAKEST_FRIENDLY:
-
-                    if (teamBlackboard.GetWeakestMember() && teamBlackboard.GetWeakestMember() != agentData.gameObject)
-                    {
-                        result = teamBlackboard.GetWeakestMember().GetComponent<AgentData>().CurrentHitPoints < value;
-                    }
-                    break;
-                case GameObjects.THIS_AGENT:
-                    result = agentData.CurrentHitPoints < value;
-                    break;
-            }
-            if (result)
-            {
-                return NodeState.SUCCESS;
-            }
-            else
-            {
-
-                return NodeState.FAILURE;
-            }
-        }
-    }
-
-    // Check if there is a Pick Up of type available
-    public class PickUpAvailable : Node
-    {
-        PickUps type;
-
-        public PickUpAvailable(PickUps type)
-        {
-            this.type = type;
-        }
-        public override NodeState Evaluate()
-        {
-            bool result = false;
-            switch (type)
-            {
-                case PickUps.HEALTH:
-
-                    Debug.Log("Is health pack available");
-
-                    HealthKit[] health = GameObject.FindObjectsOfType<HealthKit>();
-                    for (int i = 0; i < health.Length; i++)
-                    {
-                        if (!health[i].transform.parent)
-                        {
-                            result = true;
-                            break;
-                        }
-                    }
-                    break;
-                case PickUps.POWER:
-
-                    Debug.Log("Is power available");
-
-                    PowerUp[] power = GameObject.FindObjectsOfType<PowerUp>();
-                    for (int i = 0; i < power.Length; i++)
-                    {
-                        if (!power[i].transform.parent)
-                        {
-                            result = true;
-                            break;
-                        }
-                    }
-                    break;
-            }
-            if (result)
-            {
-                return NodeState.SUCCESS;
-            }
-            else
-            {
-                return NodeState.FAILURE;
-            }
-        }
-    }
-
-    // Check if team of type has flag
-    public class TeamHasFlag : Node
-    {
-        TeamBlackboard teamBlackboard;
-        Team type;
-
-        public TeamHasFlag(TeamBlackboard teamBlackboard, Team type)
-        {
-            this.teamBlackboard = teamBlackboard;
-            this.type = type;
-        }
-        public override NodeState Evaluate()
-        {
-            bool hasFlag = false;
-
-            switch (type)
-            {
-                case Team.ENEMY:
-                    Debug.Log("Does the " + teamBlackboard.name + " team have the enemy flag?");
-                    if (teamBlackboard.GetMemberWithEnemyFlag()) hasFlag = true;
-                    break;
-                case Team.FRIENDLY:
-                    Debug.Log("Does the " + teamBlackboard.name + " team have the friendly flag?");
-
-                    if (teamBlackboard.GetMemberWithFriendlyFlag()) hasFlag = true;
-                    break;
-            }
-
-            if (hasFlag)
-            {
-                return NodeState.SUCCESS;
-            }
-            else
-            {
-                return NodeState.FAILURE;
-            }
-        }
-    }
-
-    // Check if member has an item
-    public class HasItem : Node
-    {
-        private AgentData agentData;
-        private InventoryController inventoryController;
-        Items type;
-
-        public HasItem(AgentData agentData, InventoryController inventoryController, Items type)
-        {
-            this.agentData = agentData;
-            this.inventoryController = inventoryController;
-            this.type = type;
-        }
-        public override NodeState Evaluate()
-        {
-            bool result = false;
-            switch (type)
-            {
-                case Items.ENEMY_FLAG:
-                    if (inventoryController.HasItem(agentData.EnemyFlagName))
-                    {
-                        result = true;
-                    }
-                    break;
-                case Items.FRIENDLY_FLAG:
-
-                    if (inventoryController.HasItem(agentData.FriendlyFlagName))
-                    {
-                        result = true;
-                    }
-                    break;
-                case Items.HEALTH:
-
-                    if (inventoryController.HasItem("Health Kit"))
-                    {
-                        result = true;
-                    }
-                    break;
-                case Items.POWER:
-                    if (inventoryController.HasItem("Power Up"))
-                    {
-                        result = true;
-                    }
-                    break;
-            }
-            if (result)
-            {
-                return NodeState.SUCCESS;
-            }
-            else
-            {
-                return NodeState.FAILURE;
-            }
-        }
-    }
-
-    // Is PickUp in range
-    public class isPickUpInRange : Node
-    {
-        private AgentData agentData;
-        private Sensing sensing;
-        Items type;
-
-        public isPickUpInRange(AgentData agentData, Sensing sensing, Items type)
-        {
-            this.agentData = agentData;
-            this.sensing = sensing;
-            this.type = type;
-        }
-        public override NodeState Evaluate()
-        {
-            bool result = false;
-            List<GameObject> objectsInView = sensing.GetObjectsInView();
-            for (int i = 0; i < objectsInView.Count; i++)
-            {
-                // If the item is in reach
-                if (sensing.IsItemInReach(objectsInView[i]))
-                {
-                    
-                    switch (type)
-                    {
-                        case Items.ENEMY_FLAG:
-                            if (objectsInView[i].name.Equals(agentData.EnemyFlagName))
-                            {
-                                result = true;
-                            }
-                            break;
-                        case Items.FRIENDLY_FLAG:
-
-                            if (objectsInView[i].name.Equals(agentData.FriendlyFlagName))
-                            {
-                                result = true;
-                            }
-                            break;
-                        case Items.HEALTH:
-                            if (objectsInView[i].name.Equals("Health Kit"))
-                            {
-                                result = true;
-                            }
-                            break;
-                        case Items.POWER:
-                            if (objectsInView[i].name.Equals("Power Up"))
-                            {
-                                result = true;
-                            }
-                            break;
-                        default:
-                            break;
-                    }
-                }
-            }
-            if (result)
-            {
-
-                return NodeState.SUCCESS;
-            }
-            else
-            {
-
-                return NodeState.FAILURE;
-            }
-        }
-    }
-
-    // Check if there is an enemy in attack range
-    public class EnemyInAttackRange : Node
-    {
-        private Sensing sensing;
-
-        public EnemyInAttackRange(Sensing sensing)
-        {
-            this.sensing = sensing;
-        }
-        public override NodeState Evaluate()
-        {
-            if (sensing.IsInAttackRange(sensing.GetNearestEnemyInView()))
-            {
-                return NodeState.SUCCESS;
-            }
-            else
-            {
-                return NodeState.FAILURE;
-            }
-        }
-    }
-
-    // Check if a friendly team member is chasing flag
-    public class TeamMemberChasingFlag : Node
-    {
-        private AgentData thisAgent;
-
-        public TeamMemberChasingFlag(AgentData thisAgent)
-        {
-            this.thisAgent = thisAgent;
-        }
-        public override NodeState Evaluate()
-        {
-            List<GameObject> ChasingFlag = thisAgent.GetTeamBlackboard().GetMembersChasingFlag();
-            if ((ChasingFlag.Count == 1 && ChasingFlag[0] != thisAgent.gameObject) || ChasingFlag.Count > 1)
-            {
-                return NodeState.SUCCESS;
-            }
-            else
-            {
-                return NodeState.FAILURE;
-            }
-        }
-    }
-
-    public class FlagAtBase : Node
-    {
-        private TeamBlackboard teamBlackboard;
-
-        public FlagAtBase(TeamBlackboard teamBlackboard)
-        {
-            this.teamBlackboard = teamBlackboard;
-        }
-        public override NodeState Evaluate()
-        {
-            if (teamBlackboard.GetFriendlyBase().IsEnemyFlagInBase())
-            {
-                return NodeState.SUCCESS;
-            }
-            else
-            {
-                return NodeState.FAILURE;
-            }
-        }
-    }
-
-    public class HealthNextToWeakest : Node
-    {
-        private TeamBlackboard teamBlackboard;
-
-        public HealthNextToWeakest(TeamBlackboard teamBlackboard)
-        {
-            this.teamBlackboard = teamBlackboard;
-        }
-        public override NodeState Evaluate()
-        {
-            bool health_next_to_weakest = false;
-            if (teamBlackboard.GetWeakestMember())
-            {
-                // Check if there is a health pickup within reach of the weakest member
-                Sensing weakest_senses = teamBlackboard.GetWeakestMember().GetComponentInChildren<Sensing>();
-                List<GameObject> collectables_in_view = weakest_senses.GetCollectablesInView();
-                for (int i = 0; i < collectables_in_view.Count; i++)
-                {
-                    if (weakest_senses.IsItemInReach(collectables_in_view[i]) && collectables_in_view[i].name.Equals("Health Kit"))
-                    {
-                        health_next_to_weakest = true;
-                    }
-                }
-            }
-
-            if (health_next_to_weakest)
-            {
-                return NodeState.SUCCESS;
-            }
-            else
-            {
-                return NodeState.FAILURE;
-            }
-        }
-    }
-}
-
-
-
-
-/// <summary>
-/// A decorator node that inverts the result of its child node.
-/// </summary>
-public class Decorators
-{
-   
-    public class Inverter : Node
-    {
-        private Node node;
-
-        public Inverter(Node node)
-        {
-            this.node = node;
-        }
-
-
-        public override NodeState Evaluate()
-        {
-            switch (node.Evaluate())
-            {
-                case NodeState.RUNNING:
-                    nodeState = NodeState.RUNNING;
-                    break;
-                case NodeState.SUCCESS:
-                    nodeState = NodeState.FAILURE;
-                    break;
-                case NodeState.FAILURE:
-                    nodeState = NodeState.SUCCESS;
-                    break;
-                default:
-                    break;
-            }
-            return nodeState;
-        }
-    }
-}

@@ -503,6 +503,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4530aa7e286a78c44b484a52dbfedb5d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  globalBlackboard: {fileID: 4861628702448954488, guid: 12507816346104c4ea8069990f11c943, type: 3}
+  teamBlackboard: {fileID: 1722667456091237985, guid: 3aecadaa873fd104e9e7aafc04cf9f2b, type: 3}
   EnemyTeam: 1
   FriendlyTeam: 0
   AgentName: 

@@ -4,23 +4,26 @@ using UnityEngine;
 // Add new AI moods here as needed
 public enum AiMood { Idle, Attacking, Fleeing, Winning, Losing, Dead };
 
+
+
 /// <summary>
 /// Stores significant data about the AI agent, this can also be used to evaluate an enemy AI's strength
 /// A few utility methods are provided which directly affect the AI's internal state e.g. health
 /// </summary>
 public class AgentData : MonoBehaviour
 {
-    private GlobalBlackboard globalBlackboard;
-    public GlobalBlackboard GetGlobalBlackboard() 
+    public GlobalBlackboard globalBlackboard;
+    public GlobalBlackboard GetGlobalBlackboard()
     {
         return globalBlackboard;
     }
-    private TeamBlackboard teamBlackboard;
-    
-    public TeamBlackboard GetTeamBlackboard() 
-    { 
+    public TeamBlackboard teamBlackboard;
+
+    public TeamBlackboard GetTeamBlackboard()
+    {
         return teamBlackboard;
     }
+
 
     // Allow us to select the team in the Inspector
     public enum Teams

@@ -14,17 +14,24 @@ public class TeamBlackboard : MonoBehaviour
 
     //Getters
     public SetScore GetFriendlyBase() 
-    { return friendlyBase; }
+    {
+        return friendlyBase; 
+    }
 
     public GameObject GetFriendlyFlag() 
-    { return friendlyFlag; }
+    { 
+        return friendlyFlag;
+    }
 
     public SetScore GetEnemyBase() 
-    { return enemyBase; }
+    { 
+        return enemyBase; 
+    }
 
     public GameObject GetEnemyFlag() 
-    { return enemyFlag; }
-
+    {
+        return enemyFlag;
+    }
 
     private List<AgentData> team = new List<AgentData>();
     public void AddTeamMember(AgentData friendly) { team.Add(friendly); }
@@ -83,7 +90,6 @@ public class TeamBlackboard : MonoBehaviour
     { 
         memberWithFriendlyFlag = member;
     }
-
 
 
     //Members chasing flags
