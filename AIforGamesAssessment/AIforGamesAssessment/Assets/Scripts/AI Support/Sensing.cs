@@ -32,8 +32,8 @@ public class Sensing : MonoBehaviour
     void Start()
     {
         // initialise layer mask variables to filer the senses
-        VisibleToAiMask = LayerMask.GetMask("VisibleToAi");
-        WallsLayer = LayerMask.GetMask("Walls");
+        /*VisibleToAiMask = LayerMask.GetMask("VisibleToAi");
+        WallsLayer = LayerMask.GetMask("Walls");*/
 
         _agentData = GetComponentInParent<AgentData>();
     }

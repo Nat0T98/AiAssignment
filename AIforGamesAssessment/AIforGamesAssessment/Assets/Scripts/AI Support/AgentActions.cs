@@ -15,7 +15,7 @@ public class AgentActions : MonoBehaviour
     private const string AttackAnimationTrigger = "Attack";
 
     // Constants for ranges of destinations
-    private const float MaxRandomDestinationRange = 50.0f;
+    private const float MaxRandomDestinationRange = 100.0f;
     private const float MaxArrivalRange = 10.0f;
 
     private AgentData _agentData;
@@ -115,6 +115,17 @@ public class AgentActions : MonoBehaviour
             if (TestDestination(target.transform.position, out destination))
             {
                 _navAgent.destination = destination;
+
+                //Update Team Blackboards
+                if (target.name.Equals(_agentData.EnemyFlagName))
+                {
+                    _agentData.GetTeamBlackboard().AddMemberChasingFlag(gameObject);
+                }
+                else if (_agentData.GetTeamBlackboard().GetMembersChasingFlag().Contains(gameObject))
+                {
+                    _agentData.GetTeamBlackboard().RemoveMemberChasingFlag(gameObject);
+                }
+
                 return true;
             }
         }
@@ -133,6 +144,12 @@ public class AgentActions : MonoBehaviour
         if (TestDestination(target, out destination))
         {
             _navAgent.destination = destination;
+
+            //Update Team Blackboards
+            if (_agentData.GetTeamBlackboard().GetMembersChasingFlag().Contains(gameObject))
+            {
+                _agentData.GetTeamBlackboard().RemoveMemberChasingFlag(gameObject);
+            }
             return true;
         }
 
@@ -148,6 +165,12 @@ public class AgentActions : MonoBehaviour
         if (PointInsideSphere(transform.position, _navAgent.destination, MaxArrivalRange) && _navAgent.hasPath == false) //  && _navAgent.pathPending == false
         {
             _navAgent.destination = GetRandomDestination(MaxRandomDestinationRange);
+
+            //Update Team Blackboards
+            if (_agentData.GetTeamBlackboard().GetMembersChasingFlag().Contains(gameObject))
+            {
+                _agentData.GetTeamBlackboard().RemoveMemberChasingFlag(gameObject);
+            }
         }
     }
 
@@ -176,6 +199,17 @@ public class AgentActions : MonoBehaviour
                 {
                     item.GetComponent<Collectable>().Collect(_agentData);
                     _agentInventory.AddItem(item);
+
+                    //Update Team Blackboards
+                    if (item.name.Equals(_agentData.EnemyFlagName))
+                    {
+                        _agentData.GetTeamBlackboard().SetMemberWithEnemyFlag(gameObject);
+                    }
+                    else if (item.name.Equals(_agentData.FriendlyFlagName))
+                    {
+                        _agentData.GetTeamBlackboard().SetMemberWithFriendlyFlag(gameObject);
+                    }
+
                 }
             }
         }
@@ -222,7 +256,17 @@ public class AgentActions : MonoBehaviour
                     _agentInventory.RemoveItem(item.name);
 
                     item.GetComponent<Collectable>().Drop(_agentData, dropPosition);
-                }
+
+                    //Update Team Blackboards
+                    if (item.name.Equals(_agentData.EnemyFlagName))
+                    {
+                        _agentData.GetTeamBlackboard().SetMemberWithEnemyFlag(null);
+                    }
+                    else if (item.name.Equals(_agentData.FriendlyFlagName))
+                    {
+                        _agentData.GetTeamBlackboard().SetMemberWithFriendlyFlag(null);
+                    }
+            }
             }
     }
 

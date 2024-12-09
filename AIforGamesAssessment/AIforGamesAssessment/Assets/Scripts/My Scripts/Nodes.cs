@@ -156,11 +156,11 @@ public class Checks
             switch (type)
             {
                 case Team.ENEMY:
-                    Debug.Log("Does the " + teamBlackboard.name + " team have the enemy flag?");
+                    /*Debug.Log("Does the " + teamBlackboard.name + " team have the enemy flag?");*/
                     if (teamBlackboard.GetMemberWithEnemyFlag()) hasFlag = true;
                     break;
                 case Team.FRIENDLY:
-                    Debug.Log("Does the " + teamBlackboard.name + " team have the friendly flag?");
+                    /*Debug.Log("Does the " + teamBlackboard.name + " team have the friendly flag?");*/
 
                     if (teamBlackboard.GetMemberWithFriendlyFlag()) hasFlag = true;
                     break;
@@ -367,7 +367,6 @@ public class Checks
         }
     }
 
-
     public class HealthNextToWeakest : Node
     {
         private TeamBlackboard teamBlackboard;
@@ -404,102 +403,20 @@ public class Checks
         }
     }
 
-
-
 }
 
 
 public class Actions
-{
-    //Pick up the nearest Item of type
-    public class CollectItem : Node
-    {
-        private AgentActions agentActions;
-        private AgentData agentData;
-        private Sensing sensing;
-        private Items type;
-
-        public CollectItem(AgentActions agentActions, AgentData agentData, Sensing sensing, Items type)
-        {
-            this.agentActions = agentActions;
-            this.agentData = agentData;
-            this.sensing = sensing;
-            this.type = type;
-        }
-        public override NodeState Evaluate()
-        {
-            //Items in view range of agent
-            List<GameObject> collectablesInView = sensing.GetObjectsInView();
-            for (int i = 0; i < collectablesInView.Count; i++)
-            { 
-                if (sensing.IsItemInReach(collectablesInView[i]) && type == Items.FRIENDLY_FLAG && collectablesInView[i].name.Equals(agentData.FriendlyFlagName) 
-                        || type == Items.ENEMY_FLAG && collectablesInView[i].name.Equals(agentData.EnemyFlagName) 
-                        || type == Items.POWER && collectablesInView[i].name.Equals("Power Up") 
-                        || type == Items.HEALTH && collectablesInView[i].name.Equals("Health Kit"))
-                {
-                  
-                    agentActions.CollectItem(collectablesInView[i]);
-                    return NodeState.SUCCESS;
-                }
-            }
-            return NodeState.FAILURE; //No item
-        }
-    }
-
-    //Drop item of type
-    public class DropItem : Node
-    {
-        private AgentActions agentActions;
-        private AgentData agentData;
-        private InventoryController inventoryController;
-        private Items type;
-
-        public DropItem(AgentActions agentActions, AgentData agentData, InventoryController inventoryController, Items type)
-        {
-            this.agentActions = agentActions;
-            this.agentData = agentData;
-            this.inventoryController = inventoryController;
-            this.type = type;
-        }
-        public override NodeState Evaluate()
-        {
-            // Get the item from member inventory
-            GameObject item = null;
-            switch (type)
-            {
-                case Items.FRIENDLY_FLAG:
-                    item = inventoryController.GetItem(agentData.FriendlyFlagName);
-                    break;
-                case Items.ENEMY_FLAG:
-                    item = inventoryController.GetItem(agentData.EnemyFlagName);
-                    break;
-                case Items.HEALTH:
-                    item = inventoryController.GetItem("Health Kit");
-                    break;
-                case Items.POWER:
-                    item = inventoryController.GetItem("Power Up");
-                    break;
-            }
-
-            // Drop the item
-            if (item)
-            {
-                agentActions.DropItem(item);
-                return NodeState.SUCCESS;
-            }
-            return NodeState.FAILURE;
-        }
-    }
-
+{       
     //Move towards closest GameObject of type
-    public class MoveTowardsGO : Node
+    public class MoveToObj : Node
     {
         private AgentActions agentActions;
         private AgentData agentData;
         private Sensing sensing;
         private Objects type;
 
-        public MoveTowardsGO(AgentActions agentActions, AgentData agentData, Sensing sensing, Objects type)
+        public MoveToObj(AgentActions agentActions, AgentData agentData, Sensing sensing, Objects type)
         {
             this.agentActions = agentActions;
             this.agentData = agentData;
@@ -557,7 +474,7 @@ public class Actions
                 return NodeState.RUNNING;
             }
 
-            
+
             if (isInReach && sensing.IsItemInReach(GO) ||
                 notInReach && sensing.IsInAttackRange(GO))
             {
@@ -580,6 +497,109 @@ public class Actions
             return null;
         }
     }
+
+    //Attack nearest enemy
+    public class Attack : Node
+    {
+        Sensing sensing;
+        AgentActions agentActions;
+
+        public Attack(Sensing sensing, AgentActions agentActions)
+        {
+            this.sensing = sensing;
+            this.agentActions = agentActions;
+        }
+
+        public override NodeState Evaluate()
+        {
+            GameObject nearestEnemy = sensing.GetNearestEnemyInView();
+            agentActions.AttackEnemy(nearestEnemy);
+            if (!sensing.IsInAttackRange(sensing.GetNearestEnemyInView()))
+            {
+                return NodeState.SUCCESS;
+            }
+            return NodeState.RUNNING;
+        }
+    }
+    //Pick up the nearest Item of type
+    public class CollectItem : Node
+    {
+        private AgentActions agentActions;
+        private AgentData agentData;
+        private Sensing sensing;
+        private Items type;
+
+        public CollectItem(AgentActions agentActions, AgentData agentData, Sensing sensing, Items type)
+        {
+            this.agentActions = agentActions;
+            this.agentData = agentData;
+            this.sensing = sensing;
+            this.type = type;
+        }
+        public override NodeState Evaluate()
+        {
+            //Items in view range of agent
+            List<GameObject> collectablesInView = sensing.GetObjectsInView();
+            for (int i = 0; i < collectablesInView.Count; i++)
+            {
+                if (sensing.IsItemInReach(collectablesInView[i]) && type == Items.FRIENDLY_FLAG && collectablesInView[i].name.Equals(agentData.FriendlyFlagName)
+                        || type == Items.ENEMY_FLAG && collectablesInView[i].name.Equals(agentData.EnemyFlagName)
+                        || type == Items.POWER && collectablesInView[i].name.Equals("Power Up")
+                        || type == Items.HEALTH && collectablesInView[i].name.Equals("Health Kit"))
+                {
+
+                    agentActions.CollectItem(collectablesInView[i]);
+                    return NodeState.SUCCESS;
+                }
+            }
+            return NodeState.FAILURE; //No item
+        }
+    }
+
+    //Drop item of type
+    public class DropItem : Node
+    {
+        private AgentActions agentActions;
+        private AgentData agentData;
+        private InventoryController inventoryController;
+        private Items type;
+
+        public DropItem(AgentActions agentActions, AgentData agentData, InventoryController inventoryController, Items type)
+        {
+            this.agentActions = agentActions;
+            this.agentData = agentData;
+            this.inventoryController = inventoryController;
+            this.type = type;
+        }
+        public override NodeState Evaluate()
+        {
+            // Get the item from member inventory
+            GameObject item = null;
+            switch (type)
+            {
+                case Items.FRIENDLY_FLAG:
+                    item = inventoryController.GetItem(agentData.FriendlyFlagName);
+                    break;
+                case Items.ENEMY_FLAG:
+                    item = inventoryController.GetItem(agentData.EnemyFlagName);
+                    break;
+                case Items.HEALTH:
+                    item = inventoryController.GetItem("Health Kit");
+                    break;
+                case Items.POWER:
+                    item = inventoryController.GetItem("Power Up");
+                    break;
+            }
+
+            // Drop the item
+            if (item)
+            {
+                agentActions.DropItem(item);
+                return NodeState.SUCCESS;
+            }
+            return NodeState.FAILURE;
+        }
+    }   
 
     //Flee
     public class Flee : Node
@@ -637,31 +657,8 @@ public class Actions
             return NodeState.SUCCESS;
         }
     }
-
-    //Attack nearest enemy
-    public class Attack : Node
-    {
-        Sensing sensing;
-        AgentActions agentActions;
-
-        public Attack(Sensing sensing, AgentActions agentActions)
-        {
-            this.sensing = sensing;
-            this.agentActions = agentActions;
-        }
-
-        public override NodeState Evaluate()
-        {
-            GameObject nearestEnemy = sensing.GetNearestEnemyInView();
-            agentActions.AttackEnemy(nearestEnemy);
-            if (!sensing.IsInAttackRange(sensing.GetNearestEnemyInView()))
-            {
-                return NodeState.SUCCESS;
-            }
-            return NodeState.RUNNING;
-        }
-    }
 }
+
 
 
 

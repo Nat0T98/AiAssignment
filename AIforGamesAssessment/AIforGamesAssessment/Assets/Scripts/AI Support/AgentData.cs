@@ -250,7 +250,7 @@ public class AgentData : MonoBehaviour
     void Start ()
     {        
         //Find reference to global blackboard on start
-        globalBlackboard = GameObject.Find("Global Blackboard").GetComponent<GlobalBlackboard>();
+        globalBlackboard = GameObject.Find("GlobalBlackboard").GetComponent<GlobalBlackboard>();
 
         CurrentHitPoints = MaxHitPoints;
 

@@ -2,8 +2,8 @@ using UnityEngine;
 
 public class GlobalBlackboard : MonoBehaviour
 {
-    public TeamBlackboard blueTeamBlackboard;
-    public TeamBlackboard redTeamBlackboard;
+    [SerializeField] private TeamBlackboard blueTeamBlackboard;
+    [SerializeField] private TeamBlackboard redTeamBlackboard;
 
     public TeamBlackboard GetBlueTeamBlackboard() 
     { 
