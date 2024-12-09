@@ -117,8 +117,149 @@ public class AI : MonoBehaviour
         Nodes.Evaluate();
     }
 
-    
+
+    void InitialiseBehaviourTree()
+    {
+        //Pick Up Items
+        Actions.CollectItem PickUpEnemyFlag = new CollectItem(_agentActions, _agentData, _agentSenses, Items.ENEMY_FLAG);
+        Actions.CollectItem PickUpFriendlyFlag = new CollectItem(_agentActions, _agentData, _agentSenses, Items.FRIENDLY_FLAG);
+        Actions.CollectItem PickUpHealth = new CollectItem(_agentActions, _agentData, _agentSenses, Items.HEALTH);
+        Actions.CollectItem PickUpPower = new CollectItem(_agentActions, _agentData, _agentSenses, Items.POWER);
+
+        //Drop Items
+        Actions.DropItem DropHealth = new DropItem(_agentActions, _agentData, _agentInventory, Items.HEALTH);
+        Actions.DropItem DropEnemyFlag = new DropItem(_agentActions, _agentData, _agentInventory, Items.ENEMY_FLAG);
+        Actions.DropItem DropFriendlyFlag = new DropItem(_agentActions, _agentData, _agentInventory, Items.FRIENDLY_FLAG);
+
+        //Move towards GO
+        Actions.MoveTowardsGO MoveToEnemyFlag = new MoveTowardsGO(_agentActions, _agentData, _agentSenses, Objects.ENEMY_FLAG);
+        Actions.MoveTowardsGO MoveToFriendlyFlag = new MoveTowardsGO(_agentActions, _agentData, _agentSenses, Objects.FRIENDLY_FLAG);
+        Actions.MoveTowardsGO MoveToHealthPack = new MoveTowardsGO(_agentActions, _agentData, _agentSenses, Objects.HEALTH_PICKUP);
+        Actions.MoveTowardsGO MoveToPowerPack = new MoveTowardsGO(_agentActions, _agentData, _agentSenses, Objects.POWER_PICKUP);
+        Actions.MoveTowardsGO MoveToNearestEnemy = new MoveTowardsGO(_agentActions, _agentData, _agentSenses, Objects.NEAREST_ENEMY);
+        Actions.MoveTowardsGO MoveToFriendlyWithFlag = new MoveTowardsGO(_agentActions, _agentData, _agentSenses, Objects.FRIENDLY_WITH_FLAG);
+        Actions.MoveTowardsGO MoveToWeakestFriendly = new MoveTowardsGO(_agentActions, _agentData, _agentSenses, Objects.WEAKEST_FRIENDLY);
+        Actions.MoveTowardsGO MoveToBase = new MoveTowardsGO(_agentActions, _agentData, _agentSenses, Objects.BASE);
+        Actions.MoveTowardsGO MoveToNotInBase = new MoveTowardsGO(_agentActions, _agentData, _agentSenses, Objects.NOT_IN_BASE);
+
+        //Attack
+        Actions.Attack Attack = new Attack(_agentSenses, _agentActions);
+        //Agent Health Less Than
+        Checks.AgentHeathLessThan ThisAgentHealthCheck = new AgentHeathLessThan(_agentData, _agentData.GetTeamBlackboard(), Objects.THIS_AGENT, 30);
+        Checks.AgentHeathLessThan WeakestMemberHealthCheck = new AgentHeathLessThan(_agentData, _agentData.GetTeamBlackboard(), Objects.WEAKEST_FRIENDLY, 40);
+        //Flee
+        Actions.Flee Flee = new Flee(_agentActions, _agentSenses);
+        //Pick Ups Available
+        Checks.PickUpAvailable HealthOnLevel = new PickUpAvailable(PickUps.HEALTH);
+        Checks.PickUpAvailable PowerOnLevel = new PickUpAvailable(PickUps.POWER);
+        //Use PickUp
+        Actions.UsePickUp UseHealth = new UsePickUp(_agentActions, _agentData, _agentInventory, PickUps.HEALTH);
+        Actions.UsePickUp UsePower = new UsePickUp(_agentActions, _agentData, _agentInventory, PickUps.POWER);
+        //Team Has Flag
+        Checks.TeamHasFlag FriendlyHasEnemyFlag = new TeamHasFlag(_agentData.GetTeamBlackboard(), Team.ENEMY);
+        Checks.TeamHasFlag FriendlyHasFriendlyFlag = new TeamHasFlag(_agentData.GetTeamBlackboard(), Team.FRIENDLY);
+        Checks.TeamHasFlag EnemyHasFlag;
+        if (_agentData.FriendlyTeam == AgentData.Teams.BlueTeam)
+        {
+            EnemyHasFlag = new Checks.TeamHasFlag(_agentData.GetGlobalBlackboard().GetRedTeamBlackboard(), Team.ENEMY);
+        }
+        else
+        {
+            EnemyHasFlag = new Checks.TeamHasFlag(_agentData.GetGlobalBlackboard().GetBlueTeamBlackboard(), Team.ENEMY);
+        }
+
+        //Has Item
+        Checks.HasItem GotEnemyFlag = new HasItem(_agentData, _agentInventory, Items.ENEMY_FLAG);
+        Checks.HasItem GotFriendlyFlag = new HasItem(_agentData, _agentInventory, Items.FRIENDLY_FLAG);
+        Checks.HasItem GotHealth = new HasItem(_agentData, _agentInventory, Items.HEALTH);
+        Checks.HasItem GotPower = new HasItem(_agentData, _agentInventory, Items.POWER);
+
+        //Item is in Range
+        Checks.isPickUpInRange EnemyFlagInPickupRange = new isPickUpInRange(_agentData, _agentSenses, Items.ENEMY_FLAG);
+        Checks.isPickUpInRange FriendlyFlagInPickupRange = new isPickUpInRange(_agentData, _agentSenses, Items.FRIENDLY_FLAG);
+        Checks.isPickUpInRange HealthInPickupRange = new isPickUpInRange(_agentData, _agentSenses, Items.HEALTH);
+        Checks.isPickUpInRange PowerInPickupRange = new isPickUpInRange(_agentData, _agentSenses, Items.POWER);
+
+        //Enemy is in Attack Range
+        Checks.EnemyInAttackRange EnemyInAttackRange = new EnemyInAttackRange(_agentSenses);
+
+        //Team Member Chasing Flag
+        Checks.TeamMemberChasingFlag TeamMemberPursuingFlag = new TeamMemberChasingFlag(_agentData);
+
+        //Flag At Base
+        Checks.FlagAtBase FlagAtFriendlyBase;
+        Checks.FlagAtBase FlagAtEnemyBase;
+        if (_agentData.FriendlyTeam == AgentData.Teams.BlueTeam)
+        {
+            FlagAtEnemyBase = new FlagAtBase(_agentData.GetGlobalBlackboard().GetRedTeamBlackboard());
+            FlagAtFriendlyBase = new FlagAtBase(_agentData.GetGlobalBlackboard().GetBlueTeamBlackboard());
+        }
+        else
+        {
+            FlagAtEnemyBase = new FlagAtBase(_agentData.GetGlobalBlackboard().GetBlueTeamBlackboard());
+            FlagAtFriendlyBase = new FlagAtBase(_agentData.GetGlobalBlackboard().GetRedTeamBlackboard());
+        }
+
+        Checks.HealthNextToWeakest HealthNextToWeakest = new HealthNextToWeakest(_agentData.GetTeamBlackboard());
+
+        //Inverters
+        Inverter NotGotFriendlyFlag = new Inverter(GotFriendlyFlag);
+        Inverter NotGotEnemyFlag = new Inverter(GotEnemyFlag);
+        Inverter NoFriendlyHasFriendlyFlag = new Inverter(FriendlyHasFriendlyFlag);
+        Inverter NoFriendlyHasEnemyFlag = new Inverter(FriendlyHasEnemyFlag);
+        Inverter NoTeamMemberPursuingFlag = new Inverter(TeamMemberPursuingFlag);
+        Inverter NoFlagAtFriendlyBase = new Inverter(FlagAtFriendlyBase);
+        Inverter NoFlagAtEnemyBase = new Inverter(FlagAtEnemyBase);
+        Inverter HealthNotNextToWeakest = new Inverter(HealthNextToWeakest);
+
+        //Get Item
+        Sequence CollectHealth = new Sequence(new List<Node> { HealthInPickupRange, PickUpHealth });
+        Sequence CollectPower = new Sequence(new List<Node> { PowerInPickupRange, PickUpPower });
+        Sequence CollectHelp = new Sequence(new List<Node> { HealthNotNextToWeakest, CollectHealth });
+        Selector CollectItem = new Selector(new List<Node> { CollectHelp, CollectPower });
+
+        //Attack Enemy
+        Sequence PowerAttack = new Sequence(new List<Node> { GotPower, UsePower, Attack });
+        Selector DoAttack = new Selector(new List<Node> { PowerAttack, Attack });
+        Sequence AttackEnemy = new Sequence(new List<Node> { EnemyInAttackRange, DoAttack });
+
+        //Get Flag
+        Sequence GetEnemyFlag = new Sequence(new List<Node> { NotGotFriendlyFlag, NoFlagAtFriendlyBase, MoveToEnemyFlag, EnemyFlagInPickupRange, PickUpEnemyFlag });
+
+        //Collect Items
+        Sequence GetHealth = new Sequence(new List<Node> { HealthOnLevel, MoveToHealthPack, CollectHealth });
+        Sequence GetPower = new Sequence(new List<Node> { PowerOnLevel, MoveToPowerPack, CollectPower });
+        Selector GatherMultiple = new Selector(new List<Node> { GetHealth, GetPower });
+
+        //Defend Friendly Flag
+        Sequence AttackNearestEnemy = new Sequence(new List<Node> { MoveToNearestEnemy, AttackEnemy });
+        Sequence DefendEnemyFlag = new Sequence(new List<Node> { FriendlyHasEnemyFlag, MoveToFriendlyWithFlag, AttackNearestEnemy });
+
+        //Help Team Members
+        Sequence GivePack = new Sequence(new List<Node> { GotHealth, MoveToWeakestFriendly, DropHealth });
+        Sequence FindPack = new Sequence(new List<Node> { HealthOnLevel, MoveToHealthPack, CollectHealth, MoveToWeakestFriendly, DropHealth });
+        Selector ProvideHealthPack = new Selector(new List<Node> { GivePack, FindPack });
+        Sequence HelpTeamMembers = new Sequence(new List<Node> { WeakestMemberHealthCheck, ProvideHealthPack });
 
 
+        Sequence SaveFriendlyFlag = new Sequence(new List<Node> { EnemyHasFlag, MoveToFriendlyFlag, AttackEnemy });
+        Sequence RemoveFriendlyFlag = new Sequence(new List<Node> { NotGotEnemyFlag, NoFriendlyHasFriendlyFlag, FlagAtEnemyBase, MoveToFriendlyFlag, FriendlyFlagInPickupRange, PickUpFriendlyFlag, MoveToNotInBase });
+        Sequence PutFriendlyFlagDown = new Sequence(new List<Node> { GotFriendlyFlag, NoFlagAtEnemyBase, DropFriendlyFlag });
+        Sequence ChaseEnemyFlag = new Sequence(new List<Node> { NoFriendlyHasEnemyFlag, NoTeamMemberPursuingFlag, GetEnemyFlag });
+
+        //Defensive Behaviour
+        Sequence UseHealthPack = new Sequence(new List<Node> { GotHealth, UseHealth });
+        Sequence GetHealthPack = new Sequence(new List<Node> { HealthOnLevel, MoveToHealthPack, CollectHealth, GotHealth, UseHealth });
+        Sequence FleeSequence = new Sequence(new List<Node> { EnemyInAttackRange, Flee });
+        Selector ProtectHealth = new Selector(new List<Node> { UseHealthPack, GetHealthPack, FleeSequence });
+        Sequence ProtectSelf = new Sequence(new List<Node> { ThisAgentHealthCheck, ProtectHealth });
+        Sequence ReturnEnemyFlag = new Sequence(new List<Node> { GotEnemyFlag, MoveToBase, DropEnemyFlag });
+
+        //Friendly Flag Defense
+        Selector FriendlyFlagDefence = new Selector(new List<Node> { PutFriendlyFlagDown, RemoveFriendlyFlag, SaveFriendlyFlag });
+
+        Nodes = new Selector(new List<Node> { CollectItem, ReturnEnemyFlag, ProtectSelf, ChaseEnemyFlag, SaveFriendlyFlag, HelpTeamMembers, DefendEnemyFlag, GatherMultiple, GetEnemyFlag, AttackNearestEnemy });
+
+    }
 
 }

@@ -40,7 +40,7 @@ public enum PickUps
 }
 
 public class Checks
-{
+{ 
     //Check agent health
     public class AgentHeathLessThan : Node
     {
@@ -366,6 +366,44 @@ public class Checks
             }
         }
     }
+
+
+    public class HealthNextToWeakest : Node
+    {
+        private TeamBlackboard teamBlackboard;
+
+        public HealthNextToWeakest(TeamBlackboard teamBlackboard)
+        {
+            this.teamBlackboard = teamBlackboard;
+        }
+        public override NodeState Evaluate()
+        {
+            bool health_next_to_weakest = false;
+            if (teamBlackboard.GetWeakestMember())
+            {
+                // Check if there is a health pickup within reach of the weakest member
+                Sensing weakest_senses = teamBlackboard.GetWeakestMember().GetComponentInChildren<Sensing>();
+                List<GameObject> collectables_in_view = weakest_senses.GetCollectablesInView();
+                for (int i = 0; i < collectables_in_view.Count; i++)
+                {
+                    if (weakest_senses.IsItemInReach(collectables_in_view[i]) && collectables_in_view[i].name.Equals("Health Kit"))
+                    {
+                        health_next_to_weakest = true;
+                    }
+                }
+            }
+
+            if (health_next_to_weakest)
+            {
+                return NodeState.SUCCESS;
+            }
+            else
+            {
+                return NodeState.FAILURE;
+            }
+        }
+    }
+
 
 
 }

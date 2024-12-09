@@ -12,13 +12,13 @@ public enum AiMood { Idle, Attacking, Fleeing, Winning, Losing, Dead };
 /// </summary>
 public class AgentData : MonoBehaviour
 {
-    public GlobalBlackboard globalBlackboard;
+    //References for teams using Behaviour Tree Blackboards
+    private GlobalBlackboard globalBlackboard;
+    private TeamBlackboard teamBlackboard;
     public GlobalBlackboard GetGlobalBlackboard()
     {
         return globalBlackboard;
-    }
-    public TeamBlackboard teamBlackboard;
-
+    }   
     public TeamBlackboard GetTeamBlackboard()
     {
         return teamBlackboard;
@@ -194,6 +194,10 @@ public class AgentData : MonoBehaviour
         AgentActions actions = gameObject.GetComponent<AgentActions>();
 
         actions.DropAllItems();
+       
+        //Update Team Blackboard On Member Death
+        teamBlackboard.RemoveTeamMember(this);
+
         Destroy(gameObject);
     }
 
@@ -245,6 +249,9 @@ public class AgentData : MonoBehaviour
     // Use this for initialization
     void Start ()
     {        
+        //Find reference to global blackboard on start
+        globalBlackboard = GameObject.Find("Global Blackboard").GetComponent<GlobalBlackboard>();
+
         CurrentHitPoints = MaxHitPoints;
 
         // Set all the appropriate parameters for the current team
@@ -258,6 +265,10 @@ public class AgentData : MonoBehaviour
                 _friendlyBase = GameObject.Find(Names.RedBase);
                 _enemyBase = GameObject.Find(Names.BlueBase);
 
+                //Initialise Blue Team Blackboard
+                teamBlackboard = globalBlackboard.GetBlueTeamBlackboard();
+
+
                 break;
 
             case Teams.RedTeam:
@@ -268,8 +279,14 @@ public class AgentData : MonoBehaviour
                 _friendlyBase = GameObject.Find(Names.BlueBase);
                 _enemyBase = GameObject.Find(Names.RedBase);
 
+                //Initialise Red Team Blackboard
+                teamBlackboard = globalBlackboard.GetRedTeamBlackboard();
+
                 break;
         }
+        //Set teams for blackboards
+        teamBlackboard.AddTeamMember(this);
+
         _friendlyTeamScore = _friendlyBase.GetComponent<SetScore>();
         _enemyTeamScore = _enemyBase.GetComponent<SetScore>();
     }
