@@ -2625,7 +2625,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1155111735266221787, guid: 12507816346104c4ea8069990f11c943, type: 3}
       propertyPath: m_Name
-      value: Global Blackboard
+      value: GlobalBlackboard
       objectReference: {fileID: 0}
     - target: {fileID: 4861628702448954488, guid: 12507816346104c4ea8069990f11c943, type: 3}
       propertyPath: redTeamBlackboard
